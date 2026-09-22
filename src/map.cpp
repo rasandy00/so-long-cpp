@@ -1,21 +1,18 @@
 #include "../include/map.hpp"
 #include <fstream>
 
-Map::Map()
-    : _map(""),
-      _length(0),
-      _width(0),
-      _collectibles(0)
+Map::Map() :
+    _map (""),
+    _length (0),
+    _width (0),
+    _collectibles (0)
 {
-    /*
-     * En C++98 on ne peut pas écrire _player {0, 0} dans la
-     * liste d'initialisation (syntaxe C++11). On initialise
-     * donc les positions dans le corps du constructeur.
-     */
     _player.x = 0;
     _player.y = 0;
     _exit.x = 0;
     _exit.y = 0;
+    _start.x = 0;
+    _start.y = 0;
 }
 
 Map::~Map()
@@ -46,12 +43,28 @@ Position Map::getExitPosition() const
     return _exit;
 }
 
+Position Map::getStartPosition() const
+{
+    return _start;
+}
+
 int Map::getCollectibles() const
 {
     return _collectibles;
 }
 
-void Map::setMap(const std::string &map)
+bool Map::isTrap(int x, int y) const
+{
+    for (std::size_t i = 0; i < _traps.size(); i++)
+    {
+        if (_traps[i].x == x && _traps[i].y == y)
+            return true;
+    }
+    return false;
+}
+
+
+void Map::setMap(const std::string map)
 {
     _map = map;
 }
@@ -83,7 +96,7 @@ void Map::setCollectibles(int nbr)
     _collectibles = nbr;
 }
 
-bool Map::loadMap(const std::string &filename)
+bool Map::loadMap(const std::string& filename)
 {
     std::ifstream file(filename.c_str());
     if (!file.is_open())
@@ -94,6 +107,7 @@ bool Map::loadMap(const std::string &filename)
     int collectibles = 0;
 
     _map.clear();
+    _traps.clear();
     while (std::getline(file, line))
     {
         if (line.empty())
@@ -101,12 +115,14 @@ bool Map::loadMap(const std::string &filename)
         _map += line;
         _map += '\n';
 
-        for (int x = 0; x < (int)line.length(); x++)
+        for(int x = 0 ; x < (int)line.length(); x++)
         {
             if (line[x] == 'P')
             {
                 _player.x = x;
                 _player.y = y;
+                _start.x = x;
+                _start.y = y;
             }
             else if (line[x] == 'E')
             {
@@ -115,6 +131,13 @@ bool Map::loadMap(const std::string &filename)
             }
             else if (line[x] == 'C')
                 collectibles++;
+            else if (line[x] == 'T')
+            {
+                Position trap;
+                trap.x = x;
+                trap.y = y;
+                _traps.push_back(trap);
+            }
         }
         _width = line.length();
         y++;
@@ -122,74 +145,5 @@ bool Map::loadMap(const std::string &filename)
     _length = y;
     _collectibles = collectibles;
     file.close();
-
-    /*
-     * On vérifie que la map respecte les règles du jeu :
-     * bordure complète, un seul joueur, une seule sortie,
-     * au moins un collectible, aucun caractère invalide.
-     */
-    if (!isValid())
-        return false;
-
-    return true;
-}
-
-bool Map::isValid() const
-{
-    int width = _width;
-    int length = _length;
-
-    int playerCount = 0;
-    int exitCount = 0;
-    int collectibleCount = 0;
-
-    int x = 0;
-    int y = 0;
-
-    for (int i = 0; i < (int)_map.length(); i++)
-    {
-        char c = _map[i];
-
-        if (c == '\n')
-        {
-            /* Chaque ligne doit avoir exactement la même largeur. */
-            if (x != width)
-                return false;
-
-            x = 0;
-            y++;
-            continue;
-        }
-
-        /* Seuls ces caractères sont autorisés dans une map. */
-        if (c != '0' && c != '1' && c != 'P' && c != 'E' && c != 'C')
-            return false;
-
-        /* La map doit être entourée d'une bordure complète de murs. */
-        if (x == 0 || x == width - 1 || y == 0 || y == length - 1)
-        {
-            if (c != '1')
-                return false;
-        }
-
-        if (c == 'P')
-            playerCount++;
-        else if (c == 'E')
-            exitCount++;
-        else if (c == 'C')
-            collectibleCount++;
-
-        x++;
-    }
-
-    if (playerCount != 1)
-        return false;
-
-    if (exitCount != 1)
-        return false;
-
-    if (collectibleCount < 1)
-        return false;
-
-    return true;
+    return (true);
 }

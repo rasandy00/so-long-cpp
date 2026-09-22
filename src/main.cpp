@@ -9,6 +9,7 @@
 int main()
 {
     int level = 0;
+    int lives = 3;
 
     while (level <= 9)
     {
@@ -55,24 +56,50 @@ int main()
         Game game(
             map,
             render,
-            window.getRenderer()
+            window.getRenderer(),
+            lives
         );
 
         game.run();
 
+        lives = game.getLives();
+
         /*
-         * Si le joueur ferme la fenêtre ou appuie sur ESC
-         * sans avoir gagné, on arrête complètement le jeu.
+         * Échap ou la croix de fermeture : on quitte
+         * le programme immédiatement, sans message d'échec.
          */
-        if (!game.hasWon())
+        if (game.hasQuit())
         {
             std::cout << "Jeu quitté." << std::endl;
             return 0;
         }
 
+        /*
+         * Plus de vies : le jeu s'arrête complètement,
+         * sans repasser par le niveau suivant.
+         */
+        if (lives <= 0)
+        {
+            std::cout << "GAME OVER." << std::endl;
+            return 0;
+        }
+
+        if (!game.hasWon())
+        {
+            std::cout << "Niveau interrompu." << std::endl;
+            return 0;
+        }
+
+        /*
+         * Le niveau est terminé : une vie bonus,
+         * puis on passe immédiatement au suivant.
+         */
+        lives++;
+
         std::cout << "Niveau "
                   << level
-                  << " terminé !"
+                  << " terminé ! Vies : "
+                  << lives
                   << std::endl;
 
         level++;
@@ -87,3 +114,4 @@ int main()
 
     return 0;
 }
+

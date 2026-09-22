@@ -3,6 +3,8 @@
 
 #include <SDL2/SDL.h>
 #include <string>
+#include "trap.hpp"
+#include "player.hpp"
 
 class Map;
 
@@ -15,7 +17,8 @@ private:
     SDL_Texture *_wall;
     SDL_Texture *_collectible;
     SDL_Texture *_exit;
-    SDL_Texture *_player;
+    SDL_Texture *_trap[TRAP_STATE_COUNT];
+    SDL_Texture *_playerSheet[DIR_COUNT][4];
 
     int _tileSize;
 
@@ -24,7 +27,12 @@ public:
     ~Render();
 
     bool loadTextures();
-    void renderMap(const Map &map);
+    int getTileSize() const;
+    void renderMap(const Map &map, TrapState trapState,
+                   bool showFlash, bool playerVisible,
+                   PlayerDirection playerDir, int playerFrame,
+                   int playerPixelX, int playerPixelY);
 };
 
 #endif
+
